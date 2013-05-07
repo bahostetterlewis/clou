@@ -13,27 +13,57 @@
             [clou.crossover.views.registration :as registration]
             [clou.crossover.views.layout.application :as layout]))
 
-(defremote adder
-  [& args]
-  (apply + args))
 
-(defremote register
-  [user-info]
-  (create-user user-info))
+(def javascripts
+  ["/scripts/jQuery-1.9.0.js"
+   "/bootstrap/js/bootstrap.min.js"
+   "/scripts/codemirror.js"
+   "/scripts/syntax/markdown.js"
+   "/scripts/syntax/clojure.js"
+   "/scripts/syntax/gfm.js"
+   "/scripts/markdown_parser.js"
+   "/scripts/clou.js"])
+
+(def styles
+  ["/bootstrap/css/bootstrap-responsive.min.css"
+   "/bootstrap/css/bootstrap.min.css"
+   "/css/codemirror.css"
+   "/css/animate.min.css"
+   "/css/style.css"])
+
+
+(defn include-js
+  "Include a list of external javascript files."
+  [& scripts]
+  (for [script scripts]
+    [:script {:type "text/javascript", :src script}]))
+
+(defn include-css
+  "Include a list of external stylesheet files."
+  [& styles]
+  (for [style styles]
+    [:link {:type "text/css", :href style, :rel "stylesheet"}]))
+
+(defn head []
+  [:head
+    [:meta {:charset "utf-8"}]
+    [:meta {:http-equiv "X-UA-Compatible" :content "IE=Edge,chrome=1"}]
+    [:meta {:name "viewport" :content "width=device-width, initial-scale=1.0"}]
+    [:title (:title "clou")]
+    (map include-css styles)
+    (map include-js javascripts)])
+
+(defn layout
+  [args]
+  [:html {:lang "en"}
+    (head)
+    [:body.application [:div.container {:id :content} args]]])
+
 
 (defroutes clou
 
   (GET "/" []
-    (html (layout/layout (views/index))))
-
-  (GET "/editor" []
-    (html (layout/layout (views/index))))
-
-  (GET "/register"
-    [] (html (layout/layout (registration/register-form))))
-
-  (GET ["/user/:id" :id #"[0-9]+"] [id]
-    (html (layout/layout (str "<h1>Hello user " id "</h1>"))))
+    (html (layout [:div#content "Hello, World!"])))
 
   (route/resources "/")
   (route/not-found "Not Found"))
@@ -42,8 +72,6 @@
   (-> clou
     wrap-rpc
     (wrap-reload '[[clou.core]
-                   [clou.model]
-                   [clou.crossover.views.registration]
                    [clou.crossover.config.includes]])
     handler/site
     wrap-base-url))

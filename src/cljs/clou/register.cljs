@@ -1,2 +1,0 @@
-(ns clou.client.register)
-

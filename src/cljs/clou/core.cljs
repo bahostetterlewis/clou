@@ -3,7 +3,13 @@
   (:require [clojure.browser.repl :as repl]
             [dommy.template :as dommy-template]
             [clojure.string :as string]
-            [dommy.core :as dommy]))
+            [dommy.core :as dom]))
+
+;; init browser connected repl
+
+(defn start-repl-server [] (repl/connect "http://localhost:9000/repl"))
+
+;; util logging helpers
 
 (defn log [v & text]
   (let [vs (if (string? v)
@@ -11,11 +17,32 @@
              v)]
     (. js/console (log vs))))
 
-(def cm-default-opts
-  (clj->js
-    {:mode "markdown"
-     :theme "default"
-     :tabMode "indent"}))
+(defn log-obj
+  "Print a JS object to the console."
+  [obj]
+  (.log js/console obj)
+  obj)
+
+
+(defn ->html
+  [hiccup]
+  (dommy-template/node hiccup))
+
+
+
+;; Main view
+
+(def view
+  [:div.container-fluid {:id "content"}
+    [:div.row-fluid
+      [:div.span6 {:id "left-text"}
+        [:form
+          [:textarea {:id "text-input"}]]]
+      [:div.span6 {:id "right-text"}
+        [:div {:id "text-output"}]]]])
+
+
+;; view helpers
 
 (defn get-editor
   []
@@ -25,70 +52,54 @@
   []
   (sel1 :#text-output))
 
-(def update-delay 300)
+
+
+;; markdown update render handler
 
 (defn handle-update
   [editor instance change]
   (when editor
-    (let [preview (get-preview)
-          editor-value (.getValue editor)
-          value (if (> (count editor-value) 0)
-                  editor-value
-                  " ")
+    (let [preview           (get-preview)
+          editor-value      (.getValue editor)
+          value             (if (> (count editor-value) 0)
+                              editor-value
+                              " ")
           rendered-elements (dommy-template/html->nodes
-                          (js/markdown.toHTML value))
-          preview-panel (dommy-template/node
+                              (js/markdown.toHTML value))
+          preview-panel     (->html
                               [:div {:id "text-output"}])]
-      (reduce #(dommy/append! %1 (dommy-template/node %2)) preview-panel rendered-elements)
-      (dommy/replace! preview
+      (reduce #(dom/append! %1 (->html %2)) preview-panel rendered-elements)
+      (dom/replace! preview
         preview-panel))))
 
-(defn handle-timeout
-  []
-  (js/clearTimeout update-delay)
-  (js/setTimeout handle-update update-delay))
+
 
 (defn init-code-mirror
   []
-  (let [text-area (get-editor)
-        editor (CodeMirror/fromTextArea text-area cm-default-opts)]
+  (let [text-area       (get-editor)
+        update-delay    300
+        cm-default-opts (clj->js
+                          {:mode    "markdown"
+                           :theme   "default"
+                           :tabMode "indent"})
+        editor          (CodeMirror/fromTextArea text-area cm-default-opts)]
     (.on editor "change" (partial handle-update editor))
     (js/setTimeout handle-update update-delay)))
 
-(defn start-repl-server [] (repl/connect "http://localhost:9000/repl"))
-
-(defn generate-id-from-name
-  [n]
-  (str (string/lower-case (string/replace n #" " "-")) "-menu-item"))
-
-(defn view
-  []
-  [:div.container-fluid {:id "content"}
-    [:div.row-fluid
-      [:div.span6 {:id "left-text"}
-        [:form
-          [:textarea {:id "text-input"}]]]
-      [:div.span6 {:id "right-text"}
-        [:div {:id "text-output"}]]]])
 
 (defn init-view
   []
-  (dommy/replace!
-    (first (sel "#content"))
-    (dommy-template/node (view))))
-
-(defn relative-url
-  []
-  (let [url (.-URL js/document)
-        a (dommy-template/node [:a {:href url}])]
-    (.-pathname a)))
+  (dom/replace!
+    (sel1 "#content")
+    (->html view)))
 
 
 (defn init-app
   []
   (start-repl-server)
-  (init-view)
-  (init-code-mirror))
+  ; (init-view)
+  ; (init-code-mirror)
+  )
 
 
 (defn when-ready
