@@ -58,11 +58,11 @@
 
 ### Syntax
 - You've just seen it
-- Data strcutures *are* the code
+- Data structures *are* the code
   + there are no other precedence rules or anything else
-  + you write a Clojure program by writing the data strucutres, they are the code
+  + you write a Clojure program by writing the data structures, they are the code
   + this has many implications
-  +*homoiconicity* - the representatino of the program is done in the core data structures of the language
+  +*homoiconicity* - the representation of the program is done in the core data structures of the language
 
 
 
@@ -98,13 +98,6 @@
 - Compile time and runtime are not separate like in other languages
 - Each function define in the REPL is compiled and added to the environment
 
-#### The Java Virtual Machine
-
-###Macros
-
-- Are the shiznit in Clojure
-- Consider how a compiler processes Lisp
-  +
 
 ### Clojure, and Lisp, make beautiful code
 ![cartoon](http://imgs.xkcd.com/comics/lisp_cycles.png)
